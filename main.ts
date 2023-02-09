@@ -1,6 +1,6 @@
 /* eslint-disable no-irregular-whitespace */
-// import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
-import { App, Editor, EditorSelection, MarkdownView, Plugin, PluginSettingTab, Setting } from 'obsidian';
+// import { App, Editor, EditorSelection, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
+import { Editor, EditorSelection, MarkdownView, Plugin } from 'obsidian';
 
 // Remember to rename these classes and interfaces!
 
@@ -20,9 +20,9 @@ export default class TTTPlugin extends Plugin {
 		await this.loadSettings();
 
 		// This adds a settings tab so the user can configure various aspects of the plugin
-		/* */
+		/*
 		this.addSettingTab(new TTTSettingTab(this.app, this));
-		/* */
+		 */
 
 		// Setup ttt
 		this.ttt = new TTT();
@@ -57,7 +57,7 @@ export default class TTTPlugin extends Plugin {
 	}
 }
 
-/* */
+/*
 class TTTSettingTab extends PluginSettingTab {
 	plugin: TTTPlugin;
 
@@ -86,7 +86,7 @@ class TTTSettingTab extends PluginSettingTab {
 				}));
 	}
 }
-/* */
+ */
 
 ////
 const getSelectionBoundaries = (selection: EditorSelection) => {
