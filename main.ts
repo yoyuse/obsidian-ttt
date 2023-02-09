@@ -14,6 +14,7 @@ const DEFAULT_SETTINGS: TTTPluginSettings = {
 
 export default class TTTPlugin extends Plugin {
 	settings: TTTPluginSettings;
+	ttt: TTT;
 
 	async onload() {
 		await this.loadSettings();
@@ -98,8 +99,9 @@ export default class TTTPlugin extends Plugin {
 		 */
 
 		////
-		// Setup ttt table
-		makeTable();
+		// Setup ttt
+		// makeTable();
+		this.ttt = new TTT();
 
 		////
 		// This adds an editor command that can perform some operation on the current editor instance
@@ -114,7 +116,7 @@ export default class TTTPlugin extends Plugin {
 			],
 			editorCallback: (editor: Editor, view: MarkdownView) => {
 				// console.log(editor.getSelection());
-				doTTT(editor);
+				this.ttt.doTTT(editor);
 			}
 		});
 	}
@@ -196,12 +198,12 @@ type tableElement = string | tableElementArray;
 // interface tableElementArray extends Array<tableElement> {}
 type tableElementArray = Array<tableElement>
 
-const keys = "1234567890qwertyuiopasdfghjkl;zxcvbnm,./";
-// const pattern = /(.*?)(:?([0-9a-z;,.\/]+))([^0-9a-z;,.\/]*)$/;
-const pattern = /(.*?)(:?([0-9a-z;,./]+))([^0-9a-z;,./]*)$/;
-let table: tableElement = [];
+class TTT {
+	readonly keys = "1234567890qwertyuiopasdfghjkl;zxcvbnm,./";
+	readonly pattern = /(.*?)(:?([0-9a-z;,./]+))([^0-9a-z;,./]*)$/;
+	public table: tableElement = [];
 
-const tta = `
+	readonly tta = `
 *********************鄙***蛛**************
 ***************************************甦
 **********瑕鴉**賽*******瞰嵌*匣**儚*礫****藪*哭？*
@@ -243,7 +245,7 @@ const tta = `
 ***************炬*唸***彷壺**苹*******眩**呟**芻
 ****辯*****轢*睨****慟*邊魑****樂***胱**********
 `;
-const ttl = `
+	readonly ttl = `
 ****************************************
 ****************************************
 **********ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩ******
@@ -285,7 +287,7 @@ const ttl = `
 ****錮**********蝿秤矧萩剥*****柏箔粕曝莫*****駁函硲箸肇
 ***************筈櫨畠溌醗*****筏鳩噺塙蛤*****隼叛斑氾釆
 `;
-const ttr = `
+	readonly ttr = `
 ****！１***********┯*******┠**┿┨*******┷**
 ****＠２*********┏*┳*┓*****┣┃━╋┫*****┗*┻*┛
 ****＃３*********┌*┬*┐*****├│─┼┤*****└*┴*┘
@@ -327,7 +329,7 @@ const ttr = `
 ＃＆＊＠＞．****♪♭♯†‡庸揚揺擁溶☆△□○◯窯踊抑翼羅　▽◇◎*裸雷酪濫吏
 ****？／****←↓↑→¶痢硫粒隆虜★▲■●§僚涼猟糧陵〓▼◆※〒倫厘塁涙励
 `;
-const ttc = `
+	readonly ttc = `
 **********ヲゥヴヂヅ簡承快包唱ぱぴぷぺぽ朱陣眼執岳ぁぃぅぇぉ欲迫留替還
 **********哀逢宛囲庵徴章否納暮慰為陰隠胃遅鶴繁紹刑*****巣災列沼更
 **********暇牙壊較寒触候歯頼憲我掛敢甘患甲鹿誌夢弱瓦****茂恋刻?占
@@ -370,76 +372,82 @@ const ttc = `
 訳香走又弁/****歴作見チ入敗塚働視辺ちフ四地み楽午ご各光げグオ市株今台総与ズ
 `;
 
-const makeSubtable = (ttx: string, fn: (ch: string) => tableElement) => {
-	return ttx.replace(/^\n|\n$/, "").split(/\n/).map((s) => s.split("").map(fn));
-}
+	private makeSubtable(ttx: string, fn: (ch: string) => tableElement): tableElement {
+		return ttx.replace(/^\n|\n$/, "").split(/\n/).map((s) => s.split("").map(fn));
+	}
 
-const makeTable = () => {
-	const ttatable = makeSubtable(tta, (ch) => { return ch === "*" ? "" : ch; });
-	const ttltable = makeSubtable(ttl, (ch) => { return ch === "*" ? "" : ch; });
-	const ttrtable = makeSubtable(ttr, (ch) => { return ch === "*" ? "" : ch; });
-	const ttttable = makeSubtable(ttc, (ch) => {
-		switch (ch) {
-			case "*": return "";
-			case "※": return ttatable;
-			case "▽": return ttltable;
-			case "▲": return ttrtable;
-			default: return ch;
-		}
-	});
-	table = ttttable;
-}
+	private makeTable() {
+		const ttatable = this.makeSubtable(this.tta, (ch) => { return ch === "*" ? "" : ch; });
+		const ttltable = this.makeSubtable(this.ttl, (ch) => { return ch === "*" ? "" : ch; });
+		const ttrtable = this.makeSubtable(this.ttr, (ch) => { return ch === "*" ? "" : ch; });
+		const ttttable = this.makeSubtable(this.ttc, (ch) => {
+			switch (ch) {
+				case "*": return "";
+				case "※": return ttatable;
+				case "▽": return ttltable;
+				case "▲": return ttrtable;
+				default: return ch;
+			}
+		});
+		this.table = ttttable;
+	}
 
-const decode = (str: string) => {
-	let t: tableElement = table;
-	let dst = "";
-	let rem = "";
-	for (const ch of str.split("")) {
-		rem += ch;
-		const k = keys.indexOf(ch);
-		if (k < 0) {
-			t = table;
-			dst += ch;
-			rem = "";
-		} else {
-			t = t[k];
-			if (typeof t === "string") {
-				dst += t;
+    constructor() {
+        this.makeTable();
+		// new Notice('TTT Ready');
+    }
+
+	public decode(str: string): [string, string] {
+		let t: tableElement = this.table;
+		let dst = "";
+		let rem = "";
+		for (const ch of str.split("")) {
+			rem += ch;
+			const k = this.keys.indexOf(ch);
+			if (k < 0) {
+				t = this.table;
+				dst += ch;
 				rem = "";
-				t = table;
-			} else if (!Array.isArray(t)) {
-				t = table;
+			} else {
+				t = t[k];
+				if (typeof t === "string") {
+					dst += t;
+					rem = "";
+					t = this.table;
+				} else if (!Array.isArray(t)) {
+					t = this.table;
+				}
 			}
 		}
+		return [dst, rem];
 	}
-	return [dst, rem];
-}
 
-const decodeString = (str: string) => {
-	return decode(str)[0];
-}
-
-const doTTTSub = (editor: Editor, selection: EditorSelection) => {
-	let { from, to } = getSelectionBoundaries(selection);
-	let selectedText = editor.getRange(from, to);
-	if (selectedText.length === 0) {
-		const bol = { line: from.line, ch: 0 };
-		const left = editor.getRange(bol, to);
-		const m = pattern.exec(left);
-		if (!m) { return { anchor: from, head: to }; }
-		const [src, body, tail] = [m[2], m[3], m[4]];
-		selectedText = body;
-		from = { line: from.line, ch: from.ch - (src + tail).length };
-		to = { line: from.line, ch: from.ch + src.length };
+	public decodeString(str: string): string {
+		return this.decode(str)[0];
 	}
-	const replacementText = decodeString(selectedText);
-	editor.replaceRange(replacementText, from, to);
-	return { anchor: from, head: to };
-}
 
-const doTTT = (editor: Editor) => {
-	const selections = editor.listSelections().filter(selection => {
-		doTTTSub(editor, selection);
-	});
-	editor.setSelections(selections);
+	public doTTTSub(editor: Editor, selection: EditorSelection): EditorSelection {
+		let { from, to } = getSelectionBoundaries(selection);
+		let selectedText = editor.getRange(from, to);
+		if (selectedText.length === 0) {
+			const bol = { line: from.line, ch: 0 };
+			const left = editor.getRange(bol, to);
+			const m = this.pattern.exec(left);
+			if (!m) { return { anchor: from, head: to }; }
+			const [src, body, tail] = [m[2], m[3], m[4]];
+			selectedText = body;
+			from = { line: from.line, ch: from.ch - (src + tail).length };
+			to = { line: from.line, ch: from.ch + src.length };
+		}
+		const replacementText = this.decodeString(selectedText);
+		editor.replaceRange(replacementText, from, to);
+		return { anchor: from, head: to };
+	}
+
+	public doTTT(editor: Editor): void {
+		const selections = editor.listSelections().filter(selection => {
+			this.doTTTSub(editor, selection);
+		});
+		editor.setSelections(selections);
+	}
 }
