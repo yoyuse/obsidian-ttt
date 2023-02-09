@@ -1,6 +1,6 @@
 {
 	"name": "obsidian-ttt",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"description": "TTT, a modeless Japanese input, for Obsidian.",
 	"main": "main.js",
 	"scripts": {
